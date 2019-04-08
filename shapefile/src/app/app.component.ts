@@ -6,7 +6,7 @@ import 'ol/ol.css';
 import { OSM, Vector as VectorSource } from 'ol/source';
 import View from 'ol/View';
 import * as shp from 'shpjs';
-
+import { loadshp } from '../../src/machuque/preview.js';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -16,16 +16,42 @@ export class AppComponent implements OnInit {
   title = 'shapefile';
   map: Map;
   currentGeoJson: any;
+  index = 0;
 
   async ngOnInit() {
-    await shp('assets/REGCenso2010').then(geoJson => {
+    await shp('assets/TM_WORLD_BORDERS_SIMPL-0.3.zip').then(geoJson => {
+      console.log(geoJson);
       this.currentGeoJson = geoJson;
-      this.currentGeoJson.crs = {
-        type: 'name',
-        properties: {
-          name: 'EPSG:3857'
-        }
-      };
+    });
+    await loadshp({
+      url: 'assets/TM_WORLD_BORDERS_SIMPL-0.3.zip', // path or your upload file
+      encoding: 'utf-8', // default utf-8
+      EPSG: 4326 // default 4326
+    }, (geojson) => {
+      console.log(geojson);
+      this.currentGeoJson = geojson;
+      const vectorSource = new VectorSource({
+        features: (new GeoJSON()).readFeatures(geojson),
+        format: new GeoJSON()
+      });
+  
+      const vectorLayer = new VectorLayer({
+        source: vectorSource
+      });
+  
+      this.map = new Map({
+        layers: [
+          new TileLayer({
+            source: new OSM()
+          }),
+          vectorLayer
+        ],
+        target: 'map',
+        view: new View({
+          center: [0, 0],
+          zoom: 2
+        })
+      });
     });
 
     const geojsonObject = {
@@ -99,26 +125,6 @@ export class AppComponent implements OnInit {
       }]
     };
 
-    const vectorSource = new VectorSource({
-      features: (new GeoJSON()).readFeatures(this.currentGeoJson)
-    });
 
-    const vectorLayer = new VectorLayer({
-      source: vectorSource
-    });
-
-    this.map = new Map({
-      layers: [
-        new TileLayer({
-          source: new OSM()
-        }),
-        vectorLayer
-      ],
-      target: 'map',
-      view: new View({
-        center: [0, 0],
-        zoom: 2
-      })
-    });
   }
 }
