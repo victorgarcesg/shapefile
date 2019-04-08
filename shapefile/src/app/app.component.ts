@@ -1,14 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import 'ol/ol.css';
-import Feature from 'ol/Feature';
-import Map from 'ol/Map';
-import View from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON';
-import Circle from 'ol/geom/Circle';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
+import Map from 'ol/Map';
+import 'ol/ol.css';
 import { OSM, Vector as VectorSource } from 'ol/source';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
-
+import View from 'ol/View';
+import * as shp from 'shpjs';
 
 @Component({
   selector: 'app-root',
@@ -18,82 +15,18 @@ import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 export class AppComponent implements OnInit {
   title = 'shapefile';
   map: Map;
+  currentGeoJson: any;
 
-  ngOnInit() {
-    const image = new CircleStyle({
-      radius: 5,
-      fill: null,
-      stroke: new Stroke({ color: 'red', width: 1 })
+  async ngOnInit() {
+    await shp('assets/REGCenso2010').then(geoJson => {
+      this.currentGeoJson = geoJson;
+      this.currentGeoJson.crs = {
+        type: 'name',
+        properties: {
+          name: 'EPSG:3857'
+        }
+      };
     });
-
-    const styles = {
-      'Point': new Style({
-        image: image
-      }),
-      'LineString': new Style({
-        stroke: new Stroke({
-          color: 'green',
-          width: 1
-        })
-      }),
-      'MultiLineString': new Style({
-        stroke: new Stroke({
-          color: 'green',
-          width: 1
-        })
-      }),
-      'MultiPoint': new Style({
-        image: image
-      }),
-      'MultiPolygon': new Style({
-        stroke: new Stroke({
-          color: 'yellow',
-          width: 1
-        }),
-        fill: new Fill({
-          color: 'rgba(255, 255, 0, 0.1)'
-        })
-      }),
-      'Polygon': new Style({
-        stroke: new Stroke({
-          color: 'blue',
-          lineDash: [4],
-          width: 3
-        }),
-        fill: new Fill({
-          color: 'rgba(0, 0, 255, 0.1)'
-        })
-      }),
-      'GeometryCollection': new Style({
-        stroke: new Stroke({
-          color: 'magenta',
-          width: 2
-        }),
-        fill: new Fill({
-          color: 'magenta'
-        }),
-        image: new CircleStyle({
-          radius: 10,
-          fill: null,
-          stroke: new Stroke({
-            color: 'magenta'
-          })
-        })
-      }),
-      'Circle': new Style({
-        stroke: new Stroke({
-          color: 'red',
-          width: 2
-        }),
-        fill: new Fill({
-          color: 'rgba(255,0,0,0.2)'
-        })
-      })
-    };
-
-    const styleFunction = (feature) => {
-      return styles[feature.getGeometry().getType()];
-    };
 
     const geojsonObject = {
       'type': 'FeatureCollection',
@@ -167,14 +100,11 @@ export class AppComponent implements OnInit {
     };
 
     const vectorSource = new VectorSource({
-      features: (new GeoJSON()).readFeatures(geojsonObject)
+      features: (new GeoJSON()).readFeatures(this.currentGeoJson)
     });
 
-    vectorSource.addFeature(new Feature(new Circle([5e6, 7e6], 1e6)));
-
     const vectorLayer = new VectorLayer({
-      source: vectorSource,
-      style: styleFunction
+      source: vectorSource
     });
 
     this.map = new Map({
