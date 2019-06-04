@@ -7,6 +7,9 @@ import { OSM, Vector as VectorSource } from 'ol/source';
 import View from 'ol/View';
 import * as shp from 'shpjs';
 import { loadshp } from '../../src/machuque/preview.js';
+declare var L;
+declare var ol: any;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -19,112 +22,48 @@ export class AppComponent implements OnInit {
   index = 0;
 
   async ngOnInit() {
-    await shp('assets/TM_WORLD_BORDERS_SIMPL-0.3.zip').then(geoJson => {
-      console.log(geoJson);
-      this.currentGeoJson = geoJson;
-    });
-    await loadshp({
-      url: 'assets/TM_WORLD_BORDERS_SIMPL-0.3.zip', // path or your upload file
-      encoding: 'utf-8', // default utf-8
-      EPSG: 4326 // default 4326
-    }, (geojson) => {
-      console.log(geojson);
-      this.currentGeoJson = geojson;
-      const vectorSource = new VectorSource({
-        features: (new GeoJSON()).readFeatures(geojson),
-        format: new GeoJSON()
-      });
-  
-      const vectorLayer = new VectorLayer({
-        source: vectorSource
-      });
-  
-      this.map = new Map({
-        layers: [
-          new TileLayer({
-            source: new OSM()
-          }),
-          vectorLayer
-        ],
-        target: 'map',
-        view: new View({
-          center: [0, 0],
-          zoom: 2
-        })
-      });
+    // await shp('assets/reg.zip').then(geoJson => {
+    //   console.log(geoJson);
+    //   this.currentGeoJson = geoJson;
+    // });
+
+    // loadshp({
+    //   url: 'assets/reg.zip', // path or your upload file
+    //   encoding: 'utf-8', // default utf-8
+    //   EPSG: 4326 // default 4326
+    // }, (geojson) => {
+    //   console.log(geojson);
+    //   vector.addData(geojson);
+    //   map.fitBounds(vector.getBounds());
+    // });
+
+    //////////// LEAFTLEFT /////////////////////////
+    const map = L.map('map').setView([18.476466668402324, -69.91353750228882], 16);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    shp('assets/REGCenso2010').then(geoJson => {
+      L.geoJSON(geoJson, {
+        onEachFeature: this.onEachFeature
+      }).addTo(map);
     });
 
-    const geojsonObject = {
-      'type': 'FeatureCollection',
-      'crs': {
-        'type': 'name',
-        'properties': {
-          'name': 'EPSG:3857'
-        }
-      },
-      'features': [{
-        'type': 'Feature',
-        'geometry': {
-          'type': 'Point',
-          'coordinates': [0, 0]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'LineString',
-          'coordinates': [[4e6, -2e6], [8e6, 2e6]]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'LineString',
-          'coordinates': [[4e6, 2e6], [8e6, -2e6]]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'Polygon',
-          'coordinates': [[[-5e6, -1e6], [-4e6, 1e6], [-3e6, -1e6]]]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'MultiLineString',
-          'coordinates': [
-            [[-1e6, -7.5e5], [-1e6, 7.5e5]],
-            [[1e6, -7.5e5], [1e6, 7.5e5]],
-            [[-7.5e5, -1e6], [7.5e5, -1e6]],
-            [[-7.5e5, 1e6], [7.5e5, 1e6]]
-          ]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'MultiPolygon',
-          'coordinates': [
-            [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6]]],
-            [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6], [0, 6e6]]],
-            [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6], [3e6, 6e6]]]
-          ]
-        }
-      }, {
-        'type': 'Feature',
-        'geometry': {
-          'type': 'GeometryCollection',
-          'geometries': [{
-            'type': 'LineString',
-            'coordinates': [[-5e6, -5e6], [0, -5e6]]
-          }, {
-            'type': 'Point',
-            'coordinates': [4e6, -5e6]
-          }, {
-            'type': 'Polygon',
-            'coordinates': [[[1e6, -6e6], [2e6, -4e6], [3e6, -6e6]]]
-          }]
-        }
-      }]
-    };
+    // loadshp({
+    //   url: 'assets/reg.zip', // path or your upload file
+    //   encoding: 'utf-8', // default utf-8
+    //   EPSG: 4326 // default 4326
+    // }, (geoJson) => {
+    //   L.geoJSON(geoJson, {
+    //     onEachFeature: this.onEachFeature
+    //   }).addTo(map);
+    // });
 
+  }
 
+  private onEachFeature(feature, layer) {
+    console.log(feature.properties);
+    layer.bindPopup(feature.properties.TOPONIMIA);
   }
 }
